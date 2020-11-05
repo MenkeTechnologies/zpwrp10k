@@ -1662,7 +1662,8 @@ prompt_dir() {
     local p=$_p9k__cwd
     local -a parts=("${(s:/:)p}")
   elif [[ -o auto_name_dirs ]]; then
-    local p=${_p9k__cwd/#(#b)$HOME(|\/*)/'~'$match[1]}
+    #local p=${_p9k__cwd/#(#b)$HOME(|\/*)/'~'$match[1]}
+    local p=${(%):-%~}
     local -a parts=("${(s:/:)p}")
   else
     local p=${(%):-%~}
