@@ -6,7 +6,7 @@ typeset -gr __p9k_zd=${ZDOTDIR:-$HOME}
 typeset -gr __p9k_zd_u=${${${(q)__p9k_zd}/#(#b)${(q)HOME}(|\/*)/'~'$match[1]}//\%/%%}
 typeset -gr __p9k_zshrc=${${:-$__p9k_zd/.zshrc}:A}
 typeset -gr __p9k_zshrc_u=$__p9k_zd_u/.zshrc
-typeset -gr __p9k_root_dir_u=${${${(q)__p9k_root_dir}/#(#b)${(q)HOME}(|\/*)/'~'$match[1]}//\%/%%}
+typeset -gr __p9k_root_dir_u=${${${(q)P9K[__p9k_root_dir]}/#(#b)${(q)HOME}(|\/*)/'~'$match[1]}//\%/%%}
 
 function _p9k_can_configure() {
   [[ $1 == '-q' ]] && local -i q=1 || local -i q=0
@@ -49,7 +49,7 @@ function _p9k_can_configure() {
     }
     local style
     for style in lean lean-8colors classic rainbow pure; do
-      [[ -r $__p9k_root_dir/config/p10k-$style.zsh ]]                      || {
+      [[ -r $P9K[__p9k_root_dir]/config/p10k-$style.zsh ]]                      || {
         $0_error "$__p9k_root_dir_u/config/p10k-$style.zsh is not readable"
         return 1
       }
@@ -71,7 +71,7 @@ function p9k_configure() {
   _p9k_can_configure || return
   (
     set -- -f
-    builtin source $__p9k_root_dir/internal/wizard.zsh
+    builtin source $P9K[__p9k_root_dir]/internal/wizard.zsh
   )
   local ret=$?
   case $ret in

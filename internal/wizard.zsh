@@ -1643,7 +1643,7 @@ function ask_zshrc_edit() {
 }
 
 function generate_config() {
-  local base && base="$(<$__p9k_root_dir/config/p10k-${style//_/-}.zsh)" || return
+  local base && base="$(<$P9K[__p9k_root_dir]/config/p10k-${style//_/-}.zsh)" || return
   local lines=("${(@f)base}")
 
   function sub() {

@@ -17,7 +17,8 @@
 [[ ! -o 'no_brace_expand' ]] || __p9k_src_opts+=('no_brace_expand')
 'builtin' 'setopt' 'no_aliases' 'no_sh_glob' 'brace_expand'
 
-(( $+__p9k_root_dir )) || typeset -gr __p9k_root_dir=${POWERLEVEL9K_INSTALLATION_DIR:-${${(%):-%x}:A:h}}
+typeset -gA P9K
+P9K[__p9k_root_dir]=${POWERLEVEL9K_INSTALLATION_DIR:-${${(%):-%x}:A:h}}
 (( $+__p9k_intro )) || {
   # Leading spaces before `local` are important. Otherwise Antigen will remove `local` (!!!).
   # __p9k_trapint is to work around bugs in zsh: https://www.zsh.org/mla/workers/2020/msg00612.html.
@@ -32,6 +33,7 @@
   typeset -gr __p9k_intro_no_reply="$__p9k_intro_base; $__p9k_intro_locale"
   typeset -gr __p9k_intro="$__p9k_intro_no_locale; $__p9k_intro_locale"
 }
+
 
 zmodload zsh/langinfo
 
@@ -59,9 +61,9 @@ function _p9k_init_locale() {
   fi
   typeset -gr __p9k_sourced=12
   if [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]]; then
-    if [[ -w $__p9k_root_dir && -w $__p9k_root_dir/internal && -w $__p9k_root_dir/gitstatus ]]; then
+    if [[ -w $P9K[__p9k_root_dir] && -w $P9K[__p9k_root_dir]/internal && -w $P9K[__p9k_root_dir]/gitstatus ]]; then
       local f
-      for f in $__p9k_root_dir/{powerlevel9k.zsh-theme,powerlevel10k.zsh-theme,internal/p10k.zsh,internal/icons.zsh,internal/configure.zsh,internal/worker.zsh,internal/parser.zsh,gitstatus/gitstatus.plugin.zsh,gitstatus/install}; do
+      for f in $P9K[__p9k_root_dir]/{powerlevel9k.zsh-theme,powerlevel10k.zsh-theme,internal/p10k.zsh,internal/icons.zsh,internal/configure.zsh,internal/worker.zsh,internal/parser.zsh,gitstatus/gitstatus.plugin.zsh,gitstatus/install}; do
         [[ $f.zwc -nt $f ]] && continue
         zmodload -F zsh/files b:zf_mv b:zf_rm
         local tmp=$f.tmp.$$.zwc
@@ -74,7 +76,7 @@ function _p9k_init_locale() {
       done
     fi
   fi
-  builtin source $__p9k_root_dir/internal/p10k.zsh || true
+  builtin source $P9K[__p9k_root_dir]/internal/p10k.zsh || true
 }
 
 (( $+__p9k_instant_prompt_active )) && unsetopt prompt_cr prompt_sp || setopt prompt_cr prompt_sp

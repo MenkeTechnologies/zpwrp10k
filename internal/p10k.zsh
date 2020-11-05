@@ -49,10 +49,10 @@ if ! autoload -Uz is-at-least || ! is-at-least 5.1; then
   return 1
 fi
 
-builtin source "${__p9k_root_dir}/internal/configure.zsh"
-builtin source "${__p9k_root_dir}/internal/worker.zsh"
-builtin source "${__p9k_root_dir}/internal/parser.zsh"
-builtin source "${__p9k_root_dir}/internal/icons.zsh"
+builtin source "${P9K[__p9k_root_dir]}/internal/configure.zsh"
+builtin source "${P9K[__p9k_root_dir]}/internal/worker.zsh"
+builtin source "${P9K[__p9k_root_dir]}/internal/parser.zsh"
+builtin source "${P9K[__p9k_root_dir]}/internal/icons.zsh"
 
 # For compatibility with Powerlevel9k. It's not recommended to use mnemonic color
 # names in the configuration except for colors 0-7 as these are standard.
@@ -200,10 +200,10 @@ function _p9k_read_word() {
 }
 
 function _p9k_fetch_cwd() {
-  _p9k__cwd______________________=${(%):-%/}
-  _p9k__cwd_____________________a=${${_p9k__cwd______________________:A}:-.}
+  P9K[_p9k__cwd]=${(%):-%/}
+  P9K[_p9k__cwd_a]=${${P9K[_p9k__cwd]:A}:-.}
 
-  case $_p9k__cwd______________________ in
+  case $P9K[_p9k__cwd] in
     ~|/|.)
       _p9k__parent_dirs=()
       _p9k__parent_mtimes=()
@@ -213,11 +213,11 @@ function _p9k_fetch_cwd() {
     ;;
     ~/*)
       local parent=~/
-      local parts=(${(s./.)_p9k__cwd______________________#$parent})
+      local parts=(${(s./.)P9K[_p9k__cwd]#$parent})
     ;;
     *)
       local parent=/
-      local parts=(${(s./.)_p9k__cwd______________________})
+      local parts=(${(s./.)P9K[_p9k__cwd]})
     ;;
   esac
   local MATCH
@@ -259,7 +259,7 @@ function _p9k_glob() {
 #
 # Example: _p9k_upglob '*.csproj'
 function _p9k_upglob() {
-  local cached=$_p9k__upsearch_cache[$_p9k__cwd______________________/$1]
+  local cached=$_p9k__upsearch_cache[$P9K[_p9k__cwd]/$1]
   if [[ -n $cached ]]; then
     if [[ $_p9k__parent_mtimes_s == ${cached% *}(| *) ]]; then
       return ${cached##* }
@@ -270,11 +270,11 @@ function _p9k_upglob() {
     local -i i
     for i in ${(@)${cached:|_p9k__parent_mtimes_i}%:*}; do
       _p9k_glob $i $1 && continue
-      _p9k__upsearch_cache[$_p9k__cwd______________________/$1]="${_p9k__parent_mtimes_i[1,i]} $i"
+      _p9k__upsearch_cache[$P9K[_p9k__cwd]/$1]="${_p9k__parent_mtimes_i[1,i]} $i"
       return i
     done
     if (( i != last_idx )); then
-      _p9k__upsearch_cache[$_p9k__cwd______________________/$1]="${_p9k__parent_mtimes_i[1,$#cached]} $last_idx"
+      _p9k__upsearch_cache[$P9K[_p9k__cwd]/$1]="${_p9k__parent_mtimes_i[1,$#cached]} $last_idx"
       return last_idx
     fi
     i=$(($#cached + 1))
@@ -283,10 +283,10 @@ function _p9k_upglob() {
   fi
   for ((; i <= $#_p9k__parent_mtimes; ++i)); do
     _p9k_glob $i $1 && continue
-    _p9k__upsearch_cache[$_p9k__cwd______________________/$1]="${_p9k__parent_mtimes_i[1,i]} $i"
+    _p9k__upsearch_cache[$P9K[_p9k__cwd]/$1]="${_p9k__parent_mtimes_i[1,i]} $i"
     return i
   done
-  _p9k__upsearch_cache[$_p9k__cwd______________________/$1]="$_p9k__parent_mtimes_s 0"
+  _p9k__upsearch_cache[$P9K[_p9k__cwd]/$1]="$_p9k__parent_mtimes_s 0"
   return 0
 }
 
@@ -1183,7 +1183,7 @@ _p9k_prompt_disk_usage_init() {
   typeset -g _p9k__disk_usage_normal=
   typeset -g _p9k__disk_usage_warning=
   typeset -g _p9k__disk_usage_critical=
-  _p9k__async_segments_compute+='_p9k_worker_invoke disk_usage "_p9k_prompt_disk_usage_compute ${(q)_p9k__cwd_____________________a}"'
+  _p9k__async_segments_compute+='_p9k_worker_invoke disk_usage "_p9k_prompt_disk_usage_compute ${(q)P9K[_p9k__cwd_a]}"'
 }
 
 _p9k_prompt_disk_usage_compute() {
@@ -1659,10 +1659,10 @@ function _p9k_shorten_delim_len() {
 # Dir: current working directory
 prompt_dir() {
   if (( _POWERLEVEL9K_DIR_PATH_ABSOLUTE )); then
-    local p=$_p9k__cwd______________________
+    local p=$P9K[_p9k__cwd]
     local -a parts=("${(s:/:)p}")
   elif [[ -o auto_name_dirs ]]; then
-    #local p=${_p9k__cwd______________________/#(#b)$HOME(|\/*)/'~'$match[1]}
+    #local p=${P9K[_p9k__cwd]/#(#b)$HOME(|\/*)/'~'$match[1]}
     local p=${(%):-%~}
     if [[ $p == '~' ]]; then
         p=
@@ -1680,7 +1680,7 @@ prompt_dir() {
       local -a parts=()
       for func in zsh_directory_name $zsh_directory_name_functions; do
         local reply=()
-        if (( $+functions[$func] )) && $func d $_p9k__cwd______________________ && [[ $p == '~['$reply[1]']'* ]]; then
+        if (( $+functions[$func] )) && $func d $P9K[_p9k__cwd] && [[ $p == '~['$reply[1]']'* ]]; then
           parts+='~['$reply[1]']'
           break
         fi
@@ -1688,7 +1688,7 @@ prompt_dir() {
       if (( $#parts )); then
         parts+=(${(s:/:)${p#$parts[1]}})
       else
-        p=$_p9k__cwd______________________
+        p=$P9K[_p9k__cwd]
         parts=("${(s:/:)p}")
       fi
     else
@@ -1736,7 +1736,7 @@ prompt_dir() {
            $+commands[jq] == 1 && $#_POWERLEVEL9K_DIR_PACKAGE_FILES > 0 ]] || return
         local pats="(${(j:|:)_POWERLEVEL9K_DIR_PACKAGE_FILES})"
         local -i i=$#parts
-        local dir=$_p9k__cwd______________________
+        local dir=$P9K[_p9k__cwd]
         for (( ; i > 0; --i )); do
           local markers=($dir/${~pats}(N))
           if (( $#markers )); then
@@ -1805,9 +1805,9 @@ prompt_dir() {
       else
         local key=
       fi
-      if ! _p9k_cache_ephemeral_get $0 $e $i $_p9k__cwd______________________ || [[ $key != $_p9k__cache_val[1] ]]; then
+      if ! _p9k_cache_ephemeral_get $0 $e $i $P9K[_p9k__cwd] || [[ $key != $_p9k__cache_val[1] ]]; then
         local tail=${(j./.)parts[i,-1]}
-        local parent=$_p9k__cwd______________________[1,-2-$#tail]
+        local parent=$P9K[_p9k__cwd][1,-2-$#tail]
         _p9k_prompt_length $delim
         local -i real_delim_len=_p9k__ret
         [[ -n $parts[i-1] ]] && parts[i-1]="\${(Q)\${:-${(qqq)${(q)parts[i-1]}}}}"$'\2'
@@ -1882,7 +1882,7 @@ prompt_dir() {
     ;;
     truncate_with_folder_marker)
       if [[ -n $_POWERLEVEL9K_SHORTEN_FOLDER_MARKER ]]; then
-        local dir=$_p9k__cwd______________________
+        local dir=$P9K[_p9k__cwd]
         local -a m=()
         local -i i=$(($#parts - 1))
         for (( ; i > 1; --i )); do
@@ -1906,14 +1906,14 @@ prompt_dir() {
     ;;
   esac
 
-  [[ $_POWERLEVEL9K_DIR_SHOW_WRITABLE != 0 && ! -w $_p9k__cwd______________________ ]]
+  [[ $_POWERLEVEL9K_DIR_SHOW_WRITABLE != 0 && ! -w $P9K[_p9k__cwd] ]]
   local w=$?
-  if ! _p9k_cache_ephemeral_get $0 $_p9k__cwd______________________ $p $w $fake_first "${parts[@]}"; then
+  if ! _p9k_cache_ephemeral_get $0 $P9K[_p9k__cwd] $p $w $fake_first "${parts[@]}"; then
     local state=$0
     local icon=''
     local a='' b='' c=''
     for a b c in "${_POWERLEVEL9K_DIR_CLASSES[@]}"; do
-      if [[ $_p9k__cwd______________________ == ${~a} ]]; then
+      if [[ $P9K[_p9k__cwd] == ${~a} ]]; then
         [[ -n $b ]] && state+=_${${(U)b}//İ/I}
         icon=$'\1'$c
         break
@@ -2003,7 +2003,7 @@ prompt_dir() {
       parts=("${(@)parts//$'\3'}")
     fi
 
-    if [[ $_p9k__cwd______________________ == / && $_POWERLEVEL9K_DIR_OMIT_FIRST_CHARACTER == 1 ]]; then
+    if [[ $P9K[_p9k__cwd] == / && $_POWERLEVEL9K_DIR_OMIT_FIRST_CHARACTER == 1 ]]; then
       local sep='/'
     else
       local sep=''
@@ -2022,8 +2022,8 @@ prompt_dir() {
     fi
 
     local content="${(pj.$sep.)parts}"
-    if (( _POWERLEVEL9K_DIR_HYPERLINK && _p9k_term_has_href )) && [[ $_p9k__cwd______________________ == /* ]]; then
-      local header=$'%{\e]8;;file://'${${_p9k__cwd______________________//\%/%%25}//'#'/%%23}$'\a%}'
+    if (( _POWERLEVEL9K_DIR_HYPERLINK && _p9k_term_has_href )) && [[ $P9K[_p9k__cwd] == /* ]]; then
+      local header=$'%{\e]8;;file://'${${P9K[_p9k__cwd]//\%/%%25}//'#'/%%23}$'\a%}'
       local footer=$'%{\e]8;;\a%}'
       if (( expand )); then
         _p9k_escape $header
@@ -2077,7 +2077,7 @@ prompt_go_version() {
         p="$(go env GOPATH 2>/dev/null)" && [[ -n $p ]] || return
       fi
     fi
-    if [[ $_p9k__cwd______________________/ != $p/* && $_p9k__cwd_____________________a/ != $p/* ]]; then
+    if [[ $P9K[_p9k__cwd]/ != $p/* && $P9K[_p9k__cwd_a]/ != $p/* ]]; then
       _p9k_upglob go.mod && return
     fi
   fi
@@ -2473,9 +2473,9 @@ prompt_nodenv() {
     (( ${_POWERLEVEL9K_NODENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $NODENV_DIR != (|.) ]]; then
-      [[ $NODENV_DIR == /* ]] && local dir=$NODENV_DIR || local dir="$_p9k__cwd_____________________a/$NODENV_DIR"
+      [[ $NODENV_DIR == /* ]] && local dir=$NODENV_DIR || local dir="$P9K[_p9k__cwd_a]/$NODENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_word $dir/.node-version; then
             (( ${_POWERLEVEL9K_NODENV_SOURCES[(I)local]} )) || return
@@ -2634,9 +2634,9 @@ prompt_rbenv() {
     (( ${_POWERLEVEL9K_RBENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $RBENV_DIR != (|.) ]]; then
-      [[ $RBENV_DIR == /* ]] && local dir=$RBENV_DIR || local dir="$_p9k__cwd_____________________a/$RBENV_DIR"
+      [[ $RBENV_DIR == /* ]] && local dir=$RBENV_DIR || local dir="$P9K[_p9k__cwd_a]/$RBENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_word $dir/.ruby-version; then
             (( ${_POWERLEVEL9K_RBENV_SOURCES[(I)local]} )) || return
@@ -2697,9 +2697,9 @@ prompt_scalaenv() {
     (( ${_POWERLEVEL9K_SCALAENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $SCALAENV_DIR != (|.) ]]; then
-      [[ $SCALAENV_DIR == /* ]] && local dir=$SCALAENV_DIR || local dir="$_p9k__cwd_____________________a/$SCALAENV_DIR"
+      [[ $SCALAENV_DIR == /* ]] && local dir=$SCALAENV_DIR || local dir="$P9K[_p9k__cwd_a]/$SCALAENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_word $dir/.scala-version; then
             (( ${_POWERLEVEL9K_SCALAENV_SOURCES[(I)local]} )) || return
@@ -2755,9 +2755,9 @@ prompt_phpenv() {
     (( ${_POWERLEVEL9K_PHPENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $PHPENV_DIR != (|.) ]]; then
-      [[ $PHPENV_DIR == /* ]] && local dir=$PHPENV_DIR || local dir="$_p9k__cwd_____________________a/$PHPENV_DIR"
+      [[ $PHPENV_DIR == /* ]] && local dir=$PHPENV_DIR || local dir="$P9K[_p9k__cwd_a]/$PHPENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_word $dir/.php-version; then
             (( ${_POWERLEVEL9K_PHPENV_SOURCES[(I)local]} )) || return
@@ -2816,9 +2816,9 @@ prompt_luaenv() {
     (( ${_POWERLEVEL9K_LUAENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $LUAENV_DIR != (|.) ]]; then
-      [[ $LUAENV_DIR == /* ]] && local dir=$LUAENV_DIR || local dir="$_p9k__cwd_____________________a/$LUAENV_DIR"
+      [[ $LUAENV_DIR == /* ]] && local dir=$LUAENV_DIR || local dir="$P9K[_p9k__cwd_a]/$LUAENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_word $dir/.lua-version; then
             (( ${_POWERLEVEL9K_LUAENV_SOURCES[(I)local]} )) || return
@@ -2877,9 +2877,9 @@ prompt_jenv() {
     (( ${_POWERLEVEL9K_JENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $JENV_DIR != (|.) ]]; then
-      [[ $JENV_DIR == /* ]] && local dir=$JENV_DIR || local dir="$_p9k__cwd_____________________a/$JENV_DIR"
+      [[ $JENV_DIR == /* ]] && local dir=$JENV_DIR || local dir="$P9K[_p9k__cwd_a]/$JENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_word $dir/.java-version; then
             (( ${_POWERLEVEL9K_JENV_SOURCES[(I)local]} )) || return
@@ -2938,9 +2938,9 @@ prompt_plenv() {
     (( ${_POWERLEVEL9K_PLENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $PLENV_DIR != (|.) ]]; then
-      [[ $PLENV_DIR == /* ]] && local dir=$PLENV_DIR || local dir="$_p9k__cwd_____________________a/$PLENV_DIR"
+      [[ $PLENV_DIR == /* ]] && local dir=$PLENV_DIR || local dir="$P9K[_p9k__cwd_a]/$PLENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_word $dir/.perl-version; then
             (( ${_POWERLEVEL9K_PLENV_SOURCES[(I)local]} )) || return
@@ -3050,7 +3050,7 @@ prompt_rust_version() {
       local dir=$_p9k__parent_dirs[$?]
       local -i n m=${dir[(I)/]}
       local pair
-      for pair in ${overrides[(K)$_p9k__cwd______________________/]}; do
+      for pair in ${overrides[(K)$P9K[_p9k__cwd]/]}; do
         n=${pair%% *}
         (( n <= m )) && continue
         m=n
@@ -3670,7 +3670,7 @@ function _p9k_vcs_status_for_dir() {
     _p9k__ret=$_p9k__gitstatus_last[GIT_DIR:$GIT_DIR]
     [[ -n $_p9k__ret ]]
   else
-    local dir=$_p9k__cwd_____________________a
+    local dir=$P9K[_p9k__cwd_a]
     while true; do
       _p9k__ret=$_p9k__gitstatus_last[$dir]
       [[ -n $_p9k__ret ]] && return 0
@@ -3904,8 +3904,8 @@ function _p9k_vcs_resume() {
   if [[ -z $_p9k__gitstatus_next_dir ]]; then
     unset _p9k__gitstatus_next_dir
     case $VCS_STATUS_RESULT in
-      norepo-async) (( $1 )) && _p9k_vcs_status_purge $_p9k__cwd_____________________a;;
-      ok-async) (( $1 )) || _p9k__gitstatus_next_dir=$_p9k__cwd_____________________a;;
+      norepo-async) (( $1 )) && _p9k_vcs_status_purge $P9K[_p9k__cwd_a];;
+      ok-async) (( $1 )) || _p9k__gitstatus_next_dir=$P9K[_p9k__cwd_a];;
     esac
   fi
 
@@ -3940,12 +3940,12 @@ function _p9k_vcs_resume() {
 function _p9k_vcs_gitstatus() {
   if [[ $_p9k__refresh_reason == precmd ]]; then
     if (( $+_p9k__gitstatus_next_dir )); then
-      _p9k__gitstatus_next_dir=$_p9k__cwd_____________________a
+      _p9k__gitstatus_next_dir=$P9K[_p9k__cwd_a]
     else
       local -F timeout=_POWERLEVEL9K_VCS_MAX_SYNC_LATENCY_SECONDS
       if ! _p9k_vcs_status_for_dir; then
         _p9k__git_dir=$GIT_DIR
-        gitstatus_query_p9k_ -d $_p9k__cwd_____________________a -t $timeout -p -c '_p9k_vcs_resume 0' POWERLEVEL9K || return 1
+        gitstatus_query_p9k_ -d $P9K[_p9k__cwd_a] -t $timeout -p -c '_p9k_vcs_resume 0' POWERLEVEL9K || return 1
         _p9k_maybe_ignore_git_repo
         case $VCS_STATUS_RESULT in
           tout) _p9k__gitstatus_next_dir=''; _p9k__gitstatus_start_time=$EPOCHREALTIME; return 0;;
@@ -3956,7 +3956,7 @@ function _p9k_vcs_gitstatus() {
         if [[ -n $GIT_DIR ]]; then
           [[ $_p9k_git_slow[GIT_DIR:$GIT_DIR] == 1 ]] && timeout=0
         else
-          local dir=$_p9k__cwd_____________________a
+          local dir=$P9K[_p9k__cwd_a]
           while true; do
             case $_p9k_git_slow[$dir] in
               "") [[ $dir == (/|.) ]] && break; dir=${dir:h};;
@@ -3969,7 +3969,7 @@ function _p9k_vcs_gitstatus() {
       (( _p9k__prompt_idx == 1 )) && timeout=0
       _p9k__git_dir=$GIT_DIR
       if (( _p9k_vcs_index && $+GITSTATUS_DAEMON_PID_POWERLEVEL9K )); then
-        if ! gitstatus_query_p9k_ -d $_p9k__cwd_____________________a -t 0 -c '_p9k_vcs_resume 1' POWERLEVEL9K; then
+        if ! gitstatus_query_p9k_ -d $P9K[_p9k__cwd_a] -t 0 -c '_p9k_vcs_resume 1' POWERLEVEL9K; then
           unset VCS_STATUS_RESULT
           return 1
         fi
@@ -3978,14 +3978,14 @@ function _p9k_vcs_gitstatus() {
         _p9k__gitstatus_start_time=$EPOCHREALTIME
         return 0
       fi
-      if ! gitstatus_query_p9k_ -d $_p9k__cwd_____________________a -t $timeout -c '_p9k_vcs_resume 1' POWERLEVEL9K; then
+      if ! gitstatus_query_p9k_ -d $P9K[_p9k__cwd_a] -t $timeout -c '_p9k_vcs_resume 1' POWERLEVEL9K; then
         unset VCS_STATUS_RESULT
         return 1
       fi
       _p9k_maybe_ignore_git_repo
       case $VCS_STATUS_RESULT in
         tout) _p9k__gitstatus_next_dir=''; _p9k__gitstatus_start_time=$EPOCHREALTIME;;
-        norepo-sync) _p9k_vcs_status_purge $_p9k__cwd_____________________a;;
+        norepo-sync) _p9k_vcs_status_purge $P9K[_p9k__cwd_a];;
         ok-sync) _p9k_vcs_status_save;;
       esac
     fi
@@ -4151,9 +4151,9 @@ prompt_pyenv() {
     (( ${_POWERLEVEL9K_PYENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $PYENV_DIR != (|.) ]]; then
-      [[ $PYENV_DIR == /* ]] && local dir=$PYENV_DIR || local dir="$_p9k__cwd_____________________a/$PYENV_DIR"
+      [[ $PYENV_DIR == /* ]] && local dir=$PYENV_DIR || local dir="$P9K[_p9k__cwd_a]/$PYENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_pyenv_like_version_file $dir/.python-version python-; then
             (( ${_POWERLEVEL9K_PYENV_SOURCES[(I)local]} )) || return
@@ -4221,9 +4221,9 @@ prompt_goenv() {
     (( ${_POWERLEVEL9K_GOENV_SOURCES[(I)local|global]} )) || return
     _p9k__ret=
     if [[ $GOENV_DIR != (|.) ]]; then
-      [[ $GOENV_DIR == /* ]] && local dir=$GOENV_DIR || local dir="$_p9k__cwd_____________________a/$GOENV_DIR"
+      [[ $GOENV_DIR == /* ]] && local dir=$GOENV_DIR || local dir="$P9K[_p9k__cwd_a]/$GOENV_DIR"
       dir=${dir:A}
-      if [[ $dir != $_p9k__cwd_____________________a ]]; then
+      if [[ $dir != $P9K[_p9k__cwd_a] ]]; then
         while true; do
           if _p9k_read_pyenv_like_version_file $dir/.go-version go-; then
             (( ${_POWERLEVEL9K_GOENV_SOURCES[(I)local]} )) || return
@@ -4296,7 +4296,7 @@ _p9k_prompt_swift_version_init() {
 ################################################################
 # dir_writable: Display information about the user's permission to write in the current directory
 prompt_dir_writable() {
-  if [[ ! -w "$_p9k__cwd_____________________a" ]]; then
+  if [[ ! -w "$P9K[_p9k__cwd_a]" ]]; then
     _p9k_prompt_segment "$0_FORBIDDEN" "red" "yellow1" 'LOCK_ICON' 0 '' ''
   fi
 }
@@ -5620,7 +5620,7 @@ function _p9k_set_prompt() {
         for _p9k__segment_name in ${${(0)_p9k_line_segments_right[_p9k__line_index]}%_joined}; do
           if (( $+functions[instant_prompt_$_p9k__segment_name] )); then
             local disabled=_POWERLEVEL9K_${${(U)_p9k__segment_name}//İ/I}_DISABLED_DIR_PATTERN
-            if [[ $_p9k__cwd______________________ != ${(P)~disabled} ]]; then
+            if [[ $P9K[_p9k__cwd] != ${(P)~disabled} ]]; then
               local -i len=$#_p9k__prompt
               _p9k__non_hermetic_expansion=0
               instant_prompt_$_p9k__segment_name
@@ -5636,7 +5636,7 @@ function _p9k_set_prompt() {
           local cond=$_p9k__segment_cond_right[_p9k__segment_index]
           if [[ -z $cond || -n ${(e)cond} ]]; then
             local disabled=_POWERLEVEL9K_${${(U)_p9k__segment_name}//İ/I}_DISABLED_DIR_PATTERN
-            if [[ $_p9k__cwd______________________ != ${(P)~disabled} ]]; then
+            if [[ $P9K[_p9k__cwd] != ${(P)~disabled} ]]; then
               local val=$_p9k__segment_val_right[_p9k__segment_index]
               if [[ -n $val ]]; then
                 _p9k__prompt+=$val
@@ -5666,7 +5666,7 @@ function _p9k_set_prompt() {
       for _p9k__segment_name in ${${(0)_p9k_line_segments_left[_p9k__line_index]}%_joined}; do
         if (( $+functions[instant_prompt_$_p9k__segment_name] )); then
           local disabled=_POWERLEVEL9K_${${(U)_p9k__segment_name}//İ/I}_DISABLED_DIR_PATTERN
-          if [[ $_p9k__cwd______________________ != ${(P)~disabled} ]]; then
+          if [[ $P9K[_p9k__cwd] != ${(P)~disabled} ]]; then
             local -i len=$#_p9k__prompt
             _p9k__non_hermetic_expansion=0
             instant_prompt_$_p9k__segment_name
@@ -5682,7 +5682,7 @@ function _p9k_set_prompt() {
         local cond=$_p9k__segment_cond_left[_p9k__segment_index]
         if [[ -z $cond || -n ${(e)cond} ]]; then
           local disabled=_POWERLEVEL9K_${${(U)_p9k__segment_name}//İ/I}_DISABLED_DIR_PATTERN
-          if [[ $_p9k__cwd______________________ != ${(P)~disabled} ]]; then
+          if [[ $P9K[_p9k__cwd] != ${(P)~disabled} ]]; then
             local val=$_p9k__segment_val_left[_p9k__segment_index]
             if [[ -n $val ]]; then
               _p9k__prompt+=$val
@@ -5766,7 +5766,7 @@ _p9k_dump_instant_prompt() {
   local root_dir=${__p9k_dump_file:h}
   local prompt_dir=${root_dir}/p10k-$user
   local root_file=$root_dir/p10k-instant-prompt-$user.zsh
-  local prompt_file=$prompt_dir/prompt-${#_p9k__cwd______________________}
+  local prompt_file=$prompt_dir/prompt-${#P9K[_p9k__cwd]}
   [[ -d $prompt_dir ]] || mkdir -p $prompt_dir || return
   [[ -w $root_dir && -w $prompt_dir ]] || return
 
@@ -5781,7 +5781,7 @@ _p9k_dump_instant_prompt() {
       for ((i = 6; i <= $#display_v; i+=2)); do display_v[i]=show; done
       display_v[2]=hide
       display_v[4]=hide
-      local gitstatus_dir=${${_POWERLEVEL9K_GITSTATUS_DIR:A}:-${__p9k_root_dir}/gitstatus}
+      local gitstatus_dir=${${_POWERLEVEL9K_GITSTATUS_DIR:A}:-${P9K[__p9k_root_dir]}/gitstatus}
       local gitstatus_header
       if [[ -r $gitstatus_dir/install.info ]]; then
         IFS= read -r gitstatus_header <$gitstatus_dir/install.info || return
@@ -6371,7 +6371,7 @@ function _p9k_do_dump() {
   exec {1}>&-
   (( _p9k__state_dump_fd )) || return
   if (( ! _p9k__instant_prompt_disabled )); then
-    _p9k__instant_prompt_sig=$_p9k__cwd______________________:$P9K_SSH:${(%):-%#}
+    _p9k__instant_prompt_sig=$P9K[_p9k__cwd]:$P9K_SSH:${(%):-%#}
     _p9k_set_instant_prompt
     _p9k_dump_instant_prompt
     _p9k_dumped_instant_prompt_sigs[$_p9k__instant_prompt_sig]=1
@@ -6384,7 +6384,7 @@ function _p9k_do_dump() {
 function _p9k_should_dump() {
   (( __p9k_dumps_enabled && ! _p9k__state_dump_fd )) || return
   (( _p9k__state_dump_scheduled || _p9k__prompt_idx == 1 )) && return
-  _p9k__instant_prompt_sig=$_p9k__cwd______________________:$P9K_SSH:${(%):-%#}
+  _p9k__instant_prompt_sig=$P9K[_p9k__cwd]:$P9K_SSH:${(%):-%#}
   (( ! $+_p9k_dumped_instant_prompt_sigs[$_p9k__instant_prompt_sig] ))
 }
 
@@ -6574,8 +6574,8 @@ _p9k_precmd_impl() {
               (
                 local -i pid
                 {
-                  { /bin/sh "$__p9k_root_dir"/gitstatus/install </dev/null &>/dev/null & } && pid=$!
-                  ( builtin source "$__p9k_root_dir"/internal/wizard.zsh )
+                  { /bin/sh "$P9K[__p9k_root_dir]"/gitstatus/install </dev/null &>/dev/null & } && pid=$!
+                  ( builtin source "$P9K[__p9k_root_dir]"/internal/wizard.zsh )
                 } always {
                   if (( pid )); then
                     kill -- $pid 2>/dev/null
@@ -6584,7 +6584,7 @@ _p9k_precmd_impl() {
                 }
               )
             else
-              ( builtin source "$__p9k_root_dir"/internal/wizard.zsh )
+              ( builtin source "$P9K[__p9k_root_dir]"/internal/wizard.zsh )
             fi
             if (( $? )); then
               instant_prompt_disabled=1
@@ -6631,7 +6631,7 @@ _p9k_precmd_impl() {
 
   local -i fast_vcs
   if (( _p9k_vcs_index && $+GITSTATUS_DAEMON_PID_POWERLEVEL9K )); then
-    if [[ $_p9k__cwd______________________ != $~_POWERLEVEL9K_VCS_DISABLED_DIR_PATTERN ]]; then
+    if [[ $P9K[_p9k__cwd] != $~_POWERLEVEL9K_VCS_DISABLED_DIR_PATTERN ]]; then
       local -F start_time=EPOCHREALTIME
       unset _p9k__vcs
       unset _p9k__vcs_timeout
@@ -6795,10 +6795,10 @@ _p9k_init_vars() {
   typeset -gA _p9k__read_pyenv_like_version_file_cache
 
   # _p9k__parent_dirs and _p9k__parent_mtimes are parallel arrays. They are updated
-  # together with _p9k__cwd______________________. _p9k__parent_mtimes[i] is mtime for _p9k__parent_dirs[i].
+  # together with P9K[_p9k__cwd]. _p9k__parent_mtimes[i] is mtime for _p9k__parent_dirs[i].
   #
-  # When _p9k__cwd______________________ is / or ~, both arrays are empty. When _p9k__cwd______________________ is ~/foo/bar,
-  # _p9k__parent_dirs is (/home/user/foo/bar /home/user/foo). When _p9k__cwd______________________ is
+  # When P9K[_p9k__cwd] is / or ~, both arrays are empty. When P9K[_p9k__cwd] is ~/foo/bar,
+  # _p9k__parent_dirs is (/home/user/foo/bar /home/user/foo). When P9K[_p9k__cwd] is
   # /foo/bar, it's (/foo/bar /foo).
   #
   # $_p9k__parent_mtimes_i[i] == "$i:$_p9k__parent_mtimes[i]"
@@ -6807,9 +6807,6 @@ _p9k_init_vars() {
   typeset -ga _p9k__parent_mtimes
   typeset -ga _p9k__parent_mtimes_i
   typeset -g  _p9k__parent_mtimes_s
-
-  typeset  _p9k__cwd______________________
-  typeset  _p9k__cwd_____________________a
 
   # dir/pattern => dir mtime ':' num_matches
   typeset -gA _p9k__glob_cache
@@ -7375,12 +7372,12 @@ function _p9k_on_widget_zle-line-finish() {
   (( $+functions[p10k-on-post-prompt] )) && p10k-on-post-prompt
 
   if [[ -n $_p9k_transient_prompt ]]; then
-    if [[ $_POWERLEVEL9K_TRANSIENT_PROMPT == always || $_p9k__cwd______________________ == $_p9k__last_prompt_pwd ]]; then
+    if [[ $_POWERLEVEL9K_TRANSIENT_PROMPT == always || $P9K[_p9k__cwd] == $_p9k__last_prompt_pwd ]]; then
       RPROMPT=
       PROMPT=$_p9k_transient_prompt
       __p9k_reset_state=2
     else
-      _p9k__last_prompt_pwd=$_p9k__cwd______________________
+      _p9k__last_prompt_pwd=$P9K[_p9k__cwd]
     fi
   fi
 
@@ -7932,7 +7929,7 @@ _p9k_must_init() {
   _p9k__param_pat+=$'$__p9k_sh_glob\1$__p9k_ksh_arrays\1$ITERM_SHELL_INTEGRATION_INSTALLED\1'
   _p9k__param_pat+=$'${PROMPT_EOL_MARK-%B%S%#%s%b}\1$commands[locale]\1$langinfo[CODESET]\1'
   _p9k__param_pat+=$'$VTE_VERSION\1$TERM_PROGRAM\1$DEFAULT_USER\1$P9K_SSH\1$commands[uname]\1'
-  _p9k__param_pat+=$'$__p9k_root_dir\1$functions[p10k-on-init]\1$functions[p10k-on-pre-prompt]\1'
+  _p9k__param_pat+=$'$P9K[__p9k_root_dir]\1$functions[p10k-on-init]\1$functions[p10k-on-pre-prompt]\1'
   _p9k__param_pat+=$'$functions[p10k-on-post-widget]\1$functions[p10k-on-post-prompt]\1'
   _p9k__param_pat+=$'$+commands[git]\1$terminfo[colors]'
   local MATCH
@@ -8213,7 +8210,7 @@ _p9k_init_vcs() {
   (( _POWERLEVEL9K_DISABLE_GITSTATUS )) && return
   (( $_POWERLEVEL9K_VCS_BACKENDS[(I)git] )) || return
 
-  local gitstatus_dir=${_POWERLEVEL9K_GITSTATUS_DIR:-${__p9k_root_dir}/gitstatus}
+  local gitstatus_dir=${_POWERLEVEL9K_GITSTATUS_DIR:-${P9K[__p9k_root_dir]}/gitstatus}
 
   typeset -g _p9k_preinit="function _p9k_preinit() {
     (( $+commands[git] )) || { unfunction _p9k_preinit; return 1 }
