@@ -363,6 +363,9 @@ function gitstatus_stop() {
 function gitstatus_query() {
   unset OPTIND
   local opt dir timeout=() no_diff=0
+
+  local VCS_STATUS_WORKDIR
+
   while getopts "d:c:t:p" opt "$@"; do
     case "$opt" in
       d) dir=$OPTARG;;

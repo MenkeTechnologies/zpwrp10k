@@ -275,6 +275,7 @@ function _gitstatus_process_response"${1:-}"() {
   local name=$1 timeout req_id=$3 buf
   local -i resp_fd=_GITSTATUS_RESP_FD_$name
   local -i dirty_max_index_size=_GITSTATUS_DIRTY_MAX_INDEX_SIZE_$name
+  local VCS_STATUS_WORKDIR
 
   (( $2 >= 0 )) && timeout=-t$2 && [[ -t $resp_fd ]]
   sysread $timeout -i $resp_fd 'buf[$#buf+1]' || {
