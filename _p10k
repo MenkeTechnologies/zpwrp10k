@@ -1,0 +1,64 @@
+#compdef p10k
+
+function _p10k(){
+
+  local arguments verb
+  local curcontext=$curcontext state line ret=0
+
+    local
+
+    __p10k_commands=(
+        'configure:run interactive configuration wizard'
+        'reload:reload configuration'
+        'segment:print a user-defined prompt segment'
+        'display:show, hide or toggle prompt parts'
+        'help:print this help message'
+        )
+
+  arguments=(
+        '(- :)'{-h,--help}'[show help message and exit]'
+        '(- :)'{-V,--version}'[show zpwr version and exit]'
+        '1:p10k subcommand:->verb'
+        '*:: :->args'
+    )
+
+    _arguments -S -s $arguments && return 0
+
+    case $state in
+        verb)
+
+            _describe -t p10k-commands "p10k verbs" __p10k_commands && ret=0
+            #_describe -t commands "zpwr verbs" zpwrSubcommandsAry && ret=0
+            ;;
+        args)
+            verb=$words[1]
+            curcontext="${curcontext%:*:*}:zpwr-$verb:"
+            case $verb in
+                configure)
+                    _ssd
+                    ;;
+                reload)
+                    _ssu
+                    ;;
+                segment)
+                    _zcommand
+                    ;;
+                help)
+                    _describe -t p10k-commands "p10k verbs" __p10k_commands
+                    ;;
+                display)
+                    _zcommand
+                    ;;
+                *)
+                    _message 'unknown p10k command'
+                    return 1
+                    ;;
+            esac
+        ;;
+    esac
+    ret=$?
+
+    return ret
+}
+
+_p10k "$@"
