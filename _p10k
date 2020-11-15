@@ -4,10 +4,19 @@ __p10k_partpattern(){
 
     local -AU reply
     local -aU parts
+    local k v elemCnt
 
     p10k display -a '*'
 
-    parts=( ${(k)reply} )
+    for k v in ${(kv)reply[@]};do
+        elemCnt=${(c)#${k//[^\/]/}}
+        if (( elemCnt == 0)); then
+            k="$k/*/*"
+        elif (( elemCnt == 1)); then
+            k="$k/*"
+        fi
+        parts+=( ${k} )
+    done
     _multi_parts / parts
 }
 
@@ -15,17 +24,26 @@ __p10k_partpattern_state(){
 
     local -AU reply
     local -aU parts
-    local -aU state=( 
+    local -aU state=(
         'show:the part is displayed'
         'hide:the part is not displayed'
         'print:the part is printed in precmd'
     )
+    local k v elemCnt
 
     if compset -P '*='; then
         _describe -t p10k-state 'p10k-state' state
     else
         p10k display -a '*'
-        parts=( ${(k)reply} )
+        for k v in ${(kv)reply[@]};do
+            elemCnt=${(c)#${k//[^\/]/}}
+            if (( elemCnt == 0)); then
+                k="$k/*/*"
+            elif (( elemCnt == 1)); then
+                k="$k/*"
+            fi
+            parts+=( ${k} )
+        done
         if compset -S '=*'; then
             _multi_parts / parts
         else
