@@ -121,7 +121,7 @@ __p10k_partpattern_state(){
         _describe -t p10k-state 'p10k-state' state
     else
         if ! (( $+__p10k_prompt_selectors_state )) && ! _retrieve_cache p10k_segment_cache_state; then
-            __p10k_getpart '-'
+            __p10k_getpart '='
             _store_cache p10k_segment_cache_state __p10k_prompt_selectors_state
         fi
         _multi_parts -qS '=' / __p10k_prompt_selectors_state
