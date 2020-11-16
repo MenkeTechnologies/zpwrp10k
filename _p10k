@@ -2,45 +2,15 @@
 
 __p10k_getpart(){
 
-    local -AU reply
-    local -aU keys resparts partsDir partsFinal
-    local -a parts
-    local k v inputCnt resCnt suff strip magic premagic equals starter
-    local line side elem
-    local resline resside reselem response
+    local -aU keys lines sides segments __p10k_prompt_selectors
+    local -A reply
+    lines=()
+    sides=()
+    segments=()
+    equals="$1"
+    __p10k_prompt_selectors=("*$equals" "*/*$equals" "*/*/*$equals")
 
-    starter=''
-    equals=$1
-    magic='*'
-
-    set -x
-    parts=( ${(s:/:)${PREFIX//\\\*//*/}} )
-    line="${parts[1]}"
-    side="${parts[2]}"
-    elem="${parts[3]}"
-    inputCnt=$#parts
-
-    if (( inputCnt > 2 )); then
-        _message "no more /"
-        return 1
-    fi
-
-    [[ $line != '' ]] && premagic="$line/"
-    [[ $side != '' ]] && premagic="$premagic$side/"
-    if [[ $premagic == '' ]]; then
-        magic="*"
-        starter=""
-    else
-        magic="$premagic*"
-        starter="$premagic"
-
-    fi
-
-    sleep 2
-    set +x
-    p10k display -a $magic
-    set -x
-
+    p10k display -a '*'
     keys=( ${(uk)reply} )
 
     for k in ${keys[@]};do
@@ -51,28 +21,91 @@ __p10k_getpart(){
         reselem=${resparts[3]}
 
         resCnt=$#resparts
-        [[ $premagic != '' ]] && resp="$premagic" || resp=''
 
-        resp="$resp${resparts[ $((inputCnt + 1)) ]}"
-
-        if (( (inputCnt + 1) == resCnt )); then
-            partsFinal+=( "$resp$equals" )
+        if (( resCnt == 1 )); then
+            __p10k_prompt_selectors+=("$resline$equals")
+            lines+=("$resline")
+        elif (( resCnt == 2 )); then
+            __p10k_prompt_selectors+=("$resline/$resside$equals")
+            sides+=("$resside")
         else
-            partsDir+=( "$resp/" )
+            segments+=("$segments")
+            __p10k_prompt_selectors+=("$resline/$resside/$reselem$equals")
+        fi
+
+    done
+
+    for line in ${lines}; do
+        p10k display -a "$line/*"
+        keys=( ${(uk)reply} )
+
+        hadkkSecond=false
+        hadThird=false
+        for k in ${keys[@]};do
+
+            resparts=( ${(s:/:)k} )
+            resline=${resparts[1]}
+            resside=${resparts[2]}
+            reselem=${resparts[3]}
+
+            resCnt=$#resparts
+
+            if (( resCnt == 2 )); then
+                hadSecond=true
+            elif (( resCnt == 3 )); then
+                __p10k_prompt_selectors+=("$resline/*/$reselem$equals")
+                hadThird=true
+            fi
+        done
+
+        if [[ $hadSecond == true ]]; then
+            __p10k_prompt_selectors+=("$line/*=")
+        fi
+
+        if [[ $hadThird == true ]]; then
+            __p10k_prompt_selectors+=("$line/*/*$equals")
         fi
     done
 
-    if (( inputCnt == 2 )); then
-        partsFinal+=( "$premagic*$equals" )
-    elif (( inputCnt < 2 )); then
-        partsDir+=( "$starter*/" )
+    for side in ${sides}; do
+        p10k display -a "*/$side/*"
+        keys=( ${(uk)reply} )
+
+        __p10k_prompt_selectors+=("*/$side$equals")
+        hadThird=false
+        for k in ${keys[@]};do
+
+            resparts=( ${(s:/:)k} )
+            resline=${resparts[1]}
+            resside=${resparts[2]}
+            reselem=${resparts[3]}
+            resCnt=$#resparts
+
+            if (( resCnt == 3 )); then
+                __p10k_prompt_selectors+=("*/$side/$reselem$equals")
+                hadThird=true
+            fi
+        done
+        if [[ $hadThird == true ]]; then
+            __p10k_prompt_selectors+=("*/$side/*$equals")
+        fi
+    done
+
+    if [[ $equals != '' ]]; then
+        declare -gA __p10k_prompt_selectors_state=("${__p10k_prompt_selectors[@]}")
+    else
+        declare -gA __p10k_prompt_selectors_nostate=("${__p10k_prompt_selectors[@]}")
     fi
-    set +x
-    _wanted p10k-segment-final expl segmentfinal compadd -a partsFinal
-    _wanted p10k-segment-dir expl segmentdir compadd -a partsDir
+
 }
+
 __p10k_partpattern(){
-    __p10k_getpart ""
+    if ! (( $+__p10k_prompt_selectors_nostate )) && ! _retrieve_cache p10k_segment_cache; then
+        __p10k_getpart ""
+        _store_cache p10k_segment_cache __p10k_prompt_selectors_nostate
+    fi
+
+    _multi_parts / __p10k_prompt_selectors_nostate
 
 }
 
@@ -87,7 +120,11 @@ __p10k_partpattern_state(){
     if compset -P '*='; then
         _describe -t p10k-state 'p10k-state' state
     else
-        __p10k_getpart "="
+        if ! (( $+__p10k_prompt_selectors_state )) && ! _retrieve_cache p10k_segment_cache_state; then
+            __p10k_getpart '-'
+            _store_cache p10k_segment_cache_state __p10k_prompt_selectors_state
+        fi
+        _multi_parts -qS '=' / __p10k_prompt_selectors_state
     fi
 
 }
