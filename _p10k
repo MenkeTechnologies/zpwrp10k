@@ -1,54 +1,93 @@
 #compdef p10k
 
-__p10k_partpattern(){
+__p10k_getpart(){
 
     local -AU reply
-    local -aU parts
-    local k v elemCnt
+    local -aU keys resparts partsDir partsFinal
+    local -a parts
+    local k v inputCnt resCnt suff strip magic premagic equals starter
+    local line side elem
+    local resline resside reselem response
 
-    p10k display -a '*'
+    starter=''
+    equals=$1
+    magic='*'
 
-    for k v in ${(kv)reply[@]};do
-        elemCnt=${(c)#${k//[^\/]/}}
-        if (( elemCnt == 0)); then
-            k="$k/*/*"
-        elif (( elemCnt == 1)); then
-            k="$k/*"
+    set -x
+    parts=( ${(s:/:)${PREFIX//\\\*//*/}} )
+    line="${parts[1]}"
+    side="${parts[2]}"
+    elem="${parts[3]}"
+    inputCnt=$#parts
+
+    if (( inputCnt > 2 )); then
+        _message "no more /"
+        return 1
+    fi
+
+    [[ $line != '' ]] && premagic="$line/"
+    [[ $side != '' ]] && premagic="$premagic$side/"
+    if [[ $premagic == '' ]]; then
+        magic="*"
+        starter=""
+    else
+        magic="$premagic*"
+        starter="$premagic"
+
+    fi
+
+    sleep 2
+    set +x
+    p10k display -a $magic
+    set -x
+
+    keys=( ${(uk)reply} )
+
+    for k in ${keys[@]};do
+
+        resparts=( ${(s:/:)k} )
+        resline=${resparts[1]}
+        resside=${resparts[2]}
+        reselem=${resparts[3]}
+
+        resCnt=$#resparts
+        [[ $premagic != '' ]] && resp="$premagic" || resp=''
+
+        resp="$resp${resparts[ $((inputCnt + 1)) ]}"
+
+        if (( (inputCnt + 1) == resCnt )); then
+            partsFinal+=( "$resp$equals" )
+        else
+            partsDir+=( "$resp/" )
         fi
-        parts+=( ${k} )
     done
-    _multi_parts / parts
+
+    if (( inputCnt == 2 )); then
+        partsFinal+=( "$premagic*$equals" )
+    elif (( inputCnt < 2 )); then
+        partsDir+=( "$starter*/" )
+    fi
+    set +x
+    _wanted p10k-segment-final expl segmentfinal compadd -a partsFinal
+    _wanted p10k-segment-dir expl segmentdir compadd -a partsDir
+}
+__p10k_partpattern(){
+    __p10k_getpart ""
+
 }
 
 __p10k_partpattern_state(){
 
-    local -AU reply
-    local -aU parts
     local -aU state=(
         'show:the part is displayed'
         'hide:the part is not displayed'
         'print:the part is printed in precmd'
     )
-    local k v elemCnt
 
     if compset -P '*='; then
         _describe -t p10k-state 'p10k-state' state
     else
-        p10k display -a '*'
-        for k v in ${(kv)reply[@]};do
-            elemCnt=${(c)#${k//[^\/]/}}
-            if (( elemCnt == 0)); then
-                k="$k/*/*"
-            elif (( elemCnt == 1)); then
-                k="$k/*"
-            fi
-            parts+=( ${k} )
-        done
-        if compset -S '=*'; then
-            _multi_parts / parts
-        else
-            _multi_parts -qS '=' / parts 
-        fi
+        __p10k_getpart "="
     fi
 
 }
