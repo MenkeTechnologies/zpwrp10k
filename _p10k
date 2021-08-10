@@ -135,7 +135,7 @@ __p10k_display(){
 
     arguments=(
         '(-)-a[Populate array `reply` with states of prompt parts]:part-pattern:__p10k_partpattern'
-        '(: -)-r[Redisplay prompt]'
+        '(- * :)-r[Redisplay prompt]'
         '(-)*:part-pattern:__p10k_partpattern_state'
     )
 
@@ -156,7 +156,7 @@ __p10k_segment(){
     '-c[if empty after parameter expansion and process substitution]:condition'
     '-e[segment main content will undergo parameter expansion and process]'
     '+e[segment main content should not undergo parameter expansion and process]'
-    '(- :)-h[print this help message]'
+    '(- * :)-h[print this help message]'
     )
 
     _arguments -S -s $arguments && return 0
